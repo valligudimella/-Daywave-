@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Mate</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #4682b4;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      margin: 20px;
+    }
+
+    .mood-entry {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border: 1px solid #4682b4;
+      border-radius: 5px;
+    }
+
+    .mood-entry select, .mood-entry input {
+      padding: 5px;
+      font-size: 16px;
+    }
+
+    .mood-entry button {
+      background-color: #4682b4;
+      color: white;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .mood-log {
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid #4682b4;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    .mood-summary {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .health-summary {
+      margin-top: 20px;
+      font-size: 18px;
+      text-align: center;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mood Mate</h1>
+</header>
+
+<div class="container">
+  <div class="mood-entry">
+    <label for="mood">Select Mood: </label>
+    <select id="mood">
+      <option value="😊">Happy</option>
+      <option value="😞">Sad</option>
+      <option value="😠">Angry</option>
+      <option value="😌">Relaxed</option>
+      <option value="😷">Sick</option>
+      <option value="🤔">Thoughtful</option>
+      <option value="😕">Confused</option>
+      <option value="🥱">Bored</option>
+      <option value="😃">Excited</option>
+      <option value="😢">Cry</option>
+      <option value="🤩">Amazed</option>
+      <option value="😩">Frustrated</option>
+      <option value="😜">Playful</option>
+      <option value="😎">Cool</option>
+    </select>
+
+    <label for="date">Select Date: </label>
+    <input type="date" id="date">
+
+    <button onclick="addMood()">Add Mood</button>
+  </div>
+
+  <div class="mood-log">
+    <h2>Mood Log</h2>
+    <table id="moodTable">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Date</th>
+          <th>Mood</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mood-summary">
+    <h3>Weekly Health Conditions</h3>
+    <p id="weekly-summary">No data available yet.</p>
+  </div>
+
+  <div class="health-summary">
+    <h3>Monthly Health Conditions</h3>
+    <p id="monthly-summary">No data available yet.</p>
+  </div>
+</div>
+
+<script>
+  // Store mood log in an array
+  let moodLog = [];
+
+  // Function to add mood entry
+  function addMood() {
+    const mood = document.getElementById("mood").value;
+    const date = document.getElementById("date").value;
+   
+    if (!date) {
+      alert("Please select a date!");
+      return;
+    }
+
+    // Get day of the week
+    const day = new Date(date).toLocaleString('en-us', { weekday: 'long' });
+
+    // Add entry to the mood log
+    moodLog.push({ day, date, mood });
+
+    // Update mood log table
+    updateMoodLog();
+
+    // Update weekly and monthly summaries
+    updateWeeklySummary();
+    updateMonthlySummary();
+  }
+
+  // Function to update the mood log table
+  function updateMoodLog() {
+    const tableBody = document.querySelector("#moodTable tbody");
+    tableBody.innerHTML = "";
+
+    moodLog.forEach(entry => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${entry.day}</td>
+        <td>${entry.date}</td>
+        <td>${entry.mood}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  // Function to update weekly summary
+  function updateWeeklySummary() {
+    const lastWeek = getMoodForLastDays(7);
+    const moodCounts = countMoods(lastWeek);
+
+    const healthStatus = assessHealthStatus(moodCounts);
+
+    document.getElementById("weekly-summary").textContent = healthStatus;
+  }
+
+  // Function to update monthly summary
+  function updateMonthlySummary() {
+    const lastMonth = getMoodForLastDays(30);
+    const moodCounts = countMoods(lastMonth);
+
+    const healthStatus = assessHealthStatus(moodCounts);
+
+    document.getElementById("monthly-summary").textContent = healthStatus;
+  }
+
+  // Function to get moods from the last n days
+  function getMoodForLastDays(days) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    return moodLog.filter(entry => new Date(entry.date) >= cutoffDate);
+  }
+
+  // Function to count occurrences of moods
+  function countMoods(moods) {
+    const moodCounts = {
+      "😊": 0, "😞": 0, "😠": 0, "😌": 0, "😷": 0,
+      "🤔": 0, "😕": 0, "🥱": 0, "😃": 0, "😢": 0,
+      "🤩": 0, "😩": 0, "😜": 0, "😎": 0
+    };
+
+    moods.forEach(entry => {
+      moodCounts[entry.mood] = (moodCounts[entry.mood] || 0) + 1;
+    });
+
+    return moodCounts;
+  }
+
+  // Function to assess health status based on mood counts
+  function assessHealthStatus(moodCounts) {
+    const totalMoods = Object.values(moodCounts).reduce((sum, count) => sum + count, 0);
+    const positiveMoods = ["😊", "😃", "🤩", "😎"];
+    const negativeMoods = ["😞", "😠", "😷", "😕", "😩", "😢"];
+
+    const positiveCount = positiveMoods.reduce((sum, mood) => sum + (moodCounts[mood] || 0), 0);
+    const negativeCount = negativeMoods.reduce((sum, mood) => sum + (moodCounts[mood] || 0), 0);
+
+    const balance = positiveCount - negativeCount;
+
+    if (balance > 0) {
+      return "Your health condition is generally positive this week!";
+    } else if (balance < 0) {
+      return "Your health condition shows signs of stress or frustration. Consider relaxation.";
+    } else {
+      return "Your health condition is balanced. Keep managing your emotions!";
+    }
+  }
+</script>
+
+</body>
+</html>
